@@ -1,0 +1,24 @@
+{
+  "paths": {
+    "input_dir": "input_data",
+    "output_dir": "output_data"
+  },
+  "files": {
+    "input_extension": ".xlsx",
+    "cleaned_output": "cleaned_master.xlsx",
+    "report_output": "summary_report.xlsx"
+  },
+  "columns": {
+    "quantity": "Quantity",
+    "unit_price": "UnitPrice",
+    "status": "Status",
+    "category": "Category",
+    "region": "Region"
+  },
+  "filters": {
+    "min_quantity": 1,
+    "min_unit_price": 0.01,
+    "exclude_status": ["Cancelled", "Returned"],
+    "include_status": ["Completed", "Shipped"]
+  }
+}

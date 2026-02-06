@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "excel_bot"
+version = "0.1.0"
+description = "Cross-platform Excel Automation Bot with logging, events, and notifications"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "SungJinWoo" }]
+dependencies = [
+    "pandas>=2.0",
+    "openpyxl>=3.1"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License"
+]
+
+[project.scripts]
+excel-bot = "excel_bot.run_bot:main"
+
+[tool.setuptools]
+packages = ["excel_bot"]
+
+[tool.setuptools.package-data]
+excel_bot = ["config.json", "users.json"]
