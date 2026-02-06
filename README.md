@@ -85,6 +85,8 @@ pip install --upgrade build setuptools wheel
 python -m build
 ```
 
+Note: building a wheel requires `setuptools` and `wheel` to be installed.
+
 Install locally for testing:
 
 ```bash
