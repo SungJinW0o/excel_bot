@@ -31,6 +31,31 @@ Optional launcher:
 python run_bot.py --dry-run true
 ```
 
+Headless mode (do not open report/log files):
+
+```bash
+excel-bot --dry-run true --no-open
+# or
+excel-bot --dry-run true --headless
+```
+
+## Run from source
+
+You can run directly from the repo without building a wheel:
+
+```bash
+python run_bot.py --dry-run true
+```
+
+Outputs go to `output_data/` and logs go to `logs/events.jsonl` by default.
+Use `--no-open` or `--headless` to avoid opening files in server or CI runs.
+
+Headless run from root:
+
+```bash
+python run_bot.py --dry-run true --no-open --headless
+```
+
 ## Folder structure
 
 - input_data/ - place Excel files here

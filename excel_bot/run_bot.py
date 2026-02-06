@@ -57,11 +57,22 @@ def main() -> int:
         default="true",
         help="Enable DRY_RUN mode (default: true).",
     )
+    parser.add_argument(
+        "--no-open",
+        action="store_true",
+        help="Do not open the report or log files after the run.",
+    )
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Alias for --no-open (useful for servers or CI).",
+    )
     args = parser.parse_args()
 
     dry_run = args.dry_run
     print(f"DRY_RUN={dry_run}")
     os.environ["DRY_RUN"] = dry_run
+    open_files = not (args.no_open or args.headless)
 
     # 1. Set working directory
     root = Path.cwd()
@@ -85,7 +96,7 @@ def main() -> int:
 
     # 5. Open summary report
     report_path = output_dir / "summary_report.xlsx"
-    if report_path.exists():
+    if open_files and report_path.exists():
         print(f"\nOpening report: {report_path}")
         if platform.system() == "Windows":
             os.startfile(report_path)  # type: ignore[attr-defined]
@@ -105,7 +116,7 @@ def main() -> int:
         print("\nNo events found yet.")
 
     # 7. Open log file if it exists
-    if log_path.exists():
+    if open_files and log_path.exists():
         print(f"\nOpening log file: {log_path}")
         if platform.system() == "Windows":
             os.startfile(log_path)  # type: ignore[attr-defined]

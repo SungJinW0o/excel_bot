@@ -20,6 +20,14 @@ pytest-cache-files-*/
 
 output_data/
 logs/
+input_data/
 
 .DS_Store
 Thumbs.db
+
+*.xlsx
+*.jsonl
+*.env
+
+.vscode/
+temp/
