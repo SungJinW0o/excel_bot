@@ -43,13 +43,15 @@ def emit_event(
     }
     EVENTS.append(event)
     if log_path is None:
-        log_path = DEFAULT_LOG_PATH
+        log_path = _default_log_path()
     if log_path:
         _append_jsonl(log_path, event)
     return event
 
 
-def load_events(path: str = DEFAULT_LOG_PATH) -> List[Dict[str, Any]]:
+def load_events(path: Optional[str] = None) -> List[Dict[str, Any]]:
+    if path is None:
+        path = _default_log_path()
     events: List[Dict[str, Any]] = []
     if not os.path.exists(path):
         return events

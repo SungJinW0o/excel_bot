@@ -4,15 +4,31 @@ from email.message import EmailMessage
 from typing import List, Optional
 
 from .auth import load_users
-from .events import DEFAULT_LOG_PATH, emit_event
+from .events import emit_event
 
 
-SMTP_HOST = os.getenv("SMTP_HOST", "smtp.example.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASS = os.getenv("SMTP_PASS")
-SMTP_SENDER = os.getenv("SMTP_SENDER", SMTP_USER)
-DRY_RUN = os.getenv("DRY_RUN", "false").lower() in ("1", "true", "yes")
+def _is_dry_run() -> bool:
+    return os.getenv("DRY_RUN", "false").lower() in ("1", "true", "yes")
+
+
+def _smtp_host() -> str:
+    return os.getenv("SMTP_HOST", "smtp.example.com")
+
+
+def _smtp_port() -> int:
+    return int(os.getenv("SMTP_PORT", "587"))
+
+
+def _smtp_user() -> Optional[str]:
+    return os.getenv("SMTP_USER")
+
+
+def _smtp_pass() -> Optional[str]:
+    return os.getenv("SMTP_PASS")
+
+
+def _smtp_sender() -> Optional[str]:
+    return os.getenv("SMTP_SENDER", _smtp_user())
 
 
 def get_recipients_by_role(role: str = "admin") -> List[str]:
@@ -31,16 +47,28 @@ def send_email(
     body: str,
     recipients: List[str],
     attachments: Optional[List[str]] = None,
-    smtp_host: str = SMTP_HOST,
-    smtp_port: int = SMTP_PORT,
-    smtp_user: Optional[str] = SMTP_USER,
-    smtp_pass: Optional[str] = SMTP_PASS,
-    sender: Optional[str] = SMTP_SENDER,
+    smtp_host: Optional[str] = None,
+    smtp_port: Optional[int] = None,
+    smtp_user: Optional[str] = None,
+    smtp_pass: Optional[str] = None,
+    sender: Optional[str] = None,
 ) -> None:
-    subject_prefix = "[DRY RUN] " if DRY_RUN else ""
+    if smtp_host is None:
+        smtp_host = _smtp_host()
+    if smtp_port is None:
+        smtp_port = _smtp_port()
+    if smtp_user is None:
+        smtp_user = _smtp_user()
+    if smtp_pass is None:
+        smtp_pass = _smtp_pass()
+    if sender is None:
+        sender = _smtp_sender()
+
+    dry_run = _is_dry_run()
+    subject_prefix = "[DRY RUN] " if dry_run else ""
     subject_with_prefix = f"{subject_prefix}{subject}"
     attachment_names = [os.path.basename(path) for path in (attachments or [])]
-    if DRY_RUN:
+    if dry_run:
         body = body + "\n\nNOTE: This is a dry run. No email was actually sent."
         print(f"[DRY_RUN] Email would be sent to: {recipients}")
         print(f"[DRY_RUN] Email subject: {subject_with_prefix}")
@@ -54,12 +82,18 @@ def send_email(
                 "subject": subject_with_prefix,
                 "attachments": attachment_names,
             },
-            log_path=DEFAULT_LOG_PATH,
         )
         return
 
-    required_vars = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS"]
-    missing = [var for var in required_vars if not os.getenv(var)]
+    missing = []
+    if not smtp_host:
+        missing.append("SMTP_HOST")
+    if not smtp_port:
+        missing.append("SMTP_PORT")
+    if not smtp_user:
+        missing.append("SMTP_USER")
+    if not smtp_pass:
+        missing.append("SMTP_PASS")
     if missing or smtp_host == "smtp.example.com":
         details = missing[:]
         if smtp_host == "smtp.example.com":
@@ -108,7 +142,6 @@ def send_email(
                 "subject": subject,
                 "attachments": attachment_names,
             },
-            log_path=DEFAULT_LOG_PATH,
         )
     except Exception as exc:
         print("Failed to send email:", exc)
@@ -121,7 +154,6 @@ def send_email(
                 "subject": subject,
                 "attachments": attachment_names,
             },
-            log_path=DEFAULT_LOG_PATH,
         )
 
 
@@ -141,11 +173,6 @@ def notify_pipeline_completed(cleaned_file: str, report_file: str) -> None:
         body=body,
         recipients=recipients,
         attachments=attachments,
-        smtp_host=SMTP_HOST,
-        smtp_port=SMTP_PORT,
-        smtp_user=SMTP_USER,
-        smtp_pass=SMTP_PASS,
-        sender=SMTP_SENDER,
     )
 
 
@@ -158,11 +185,6 @@ def notify_pipeline_started() -> None:
         subject=subject,
         body=body,
         recipients=recipients,
-        smtp_host=SMTP_HOST,
-        smtp_port=SMTP_PORT,
-        smtp_user=SMTP_USER,
-        smtp_pass=SMTP_PASS,
-        sender=SMTP_SENDER,
     )
 
 
@@ -178,11 +200,6 @@ def notify_data_cleaned(cleaned_file: str) -> None:
         body=body,
         recipients=recipients,
         attachments=attachments,
-        smtp_host=SMTP_HOST,
-        smtp_port=SMTP_PORT,
-        smtp_user=SMTP_USER,
-        smtp_pass=SMTP_PASS,
-        sender=SMTP_SENDER,
     )
 
 
@@ -195,9 +212,4 @@ def notify_pipeline_failed(error_msg: str) -> None:
         subject=subject,
         body=body,
         recipients=recipients,
-        smtp_host=SMTP_HOST,
-        smtp_port=SMTP_PORT,
-        smtp_user=SMTP_USER,
-        smtp_pass=SMTP_PASS,
-        sender=SMTP_SENDER,
     )

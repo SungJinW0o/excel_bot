@@ -4,7 +4,7 @@ import pandas as pd
 
 from .auth import authorize, get_user
 from .config import load_config
-from .events import DEFAULT_LOG_PATH, emit_event
+from .events import emit_event
 from .notifications import (
     notify_data_cleaned,
     notify_pipeline_completed,
@@ -20,16 +20,21 @@ def _run_pipeline() -> None:
 
     input_dir = config["paths"]["input_dir"]
     output_dir = config["paths"]["output_dir"]
+    os.makedirs(input_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
 
     input_ext = config["files"]["input_extension"]
     cleaned_output = os.path.join(output_dir, config["files"]["cleaned_output"])
     report_output = os.path.join(output_dir, config["files"]["report_output"])
 
-    excel_files = [
-        f for f in os.listdir(input_dir)
-        if f.endswith(input_ext) and not f.startswith("~$")
-    ]
+    excel_files = sorted(
+        [
+            f for f in os.listdir(input_dir)
+            if f.endswith(input_ext)
+            and not f.startswith("~$")
+            and os.path.isfile(os.path.join(input_dir, f))
+        ]
+    )
 
     if not excel_files:
         print("No Excel files found.")
@@ -39,7 +44,6 @@ def _run_pipeline() -> None:
         event_type="PIPELINE_STARTED",
         user_id=user.id,
         payload={"files_found": len(excel_files)},
-        log_path=DEFAULT_LOG_PATH
     )
     notify_pipeline_started()
 
@@ -47,7 +51,11 @@ def _run_pipeline() -> None:
 
     for file in excel_files:
         file_path = os.path.join(input_dir, file)
-        df = pd.read_excel(file_path)
+        try:
+            df = pd.read_excel(file_path)
+        except Exception as exc:
+            print(f"Skipping {file}: failed to read Excel file ({exc})")
+            continue
 
         qty_col = config["columns"]["quantity"]
         price_col = config["columns"]["unit_price"]
@@ -107,7 +115,6 @@ def _run_pipeline() -> None:
         event_type="DATA_CLEANED",
         user_id=user.id,
         payload={"rows_written": len(cleaned_all), "output_file": cleaned_output},
-        log_path=DEFAULT_LOG_PATH
     )
     notify_data_cleaned(cleaned_output)
 
@@ -156,7 +163,6 @@ def _run_pipeline() -> None:
             "files_processed": len(cleaned_frames),
             "total_rows": len(cleaned_all)
         },
-        log_path=DEFAULT_LOG_PATH
     )
 
     notify_pipeline_completed(cleaned_output, report_output)
@@ -175,7 +181,6 @@ def main() -> None:
             event_type="PIPELINE_FAILED",
             user_id="system",
             payload={"error": str(exc)},
-            log_path=DEFAULT_LOG_PATH,
         )
         notify_pipeline_failed(str(exc))
         raise

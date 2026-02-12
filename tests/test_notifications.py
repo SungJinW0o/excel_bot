@@ -5,6 +5,7 @@ import shutil
 import sys
 import uuid
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
@@ -145,3 +146,29 @@ def test_notify_pipeline_failed_dry_run_emits_event(capsys):
     assert event["payload"]["attachments"] == []
     assert "The data pipeline encountered an error:" in output
     assert error_message in output
+
+
+def test_send_email_respects_runtime_dry_run_without_reload(capsys):
+    os.environ["DRY_RUN"] = "true"
+    notifications = _reload_notifications()
+
+    EVENTS.clear()
+
+    os.environ["DRY_RUN"] = "false"
+    with patch.object(notifications.smtplib, "SMTP", side_effect=RuntimeError("smtp blocked")):
+        notifications.send_email(
+            subject="Runtime DRY_RUN toggle",
+            body="Body",
+            recipients=["test@example.com"],
+            smtp_host="smtp.test.local",
+            smtp_port=587,
+            smtp_user="user@example.com",
+            smtp_pass="secret",
+            sender="sender@example.com",
+        )
+
+    output = capsys.readouterr().out
+    event = EVENTS[-1]
+    assert event["type"] == "EMAIL_FAILED"
+    assert "Runtime DRY_RUN toggle" in event["payload"]["subject"]
+    assert "This is a dry run" not in output

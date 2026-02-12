@@ -29,7 +29,7 @@ REM set SMTP_SENDER=your-email@gmail.com
 REM 6. Run the bot
 echo.
 echo Running Excel Bot...
-excel-bot
+excel-bot --dry-run %DRY_RUN%
 set BOT_EXIT_CODE=%ERRORLEVEL%
 
 REM 7. Open summary report if exists
