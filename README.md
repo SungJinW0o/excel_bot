@@ -145,3 +145,24 @@ Run the CLI:
 ```bash
 excel-bot --dry-run true
 ```
+
+## Packaging and Publishing
+
+GitHub does not provide a native Python package registry flow like npm/nuget menus.
+For this project, use:
+
+- GitHub Releases for downloadable artifacts (`.whl`, `.tar.gz`, `setup.exe`)
+- PyPI for Python package installation via `pip`
+
+Automated workflow:
+
+- `.github/workflows/release.yml` builds and publishes packaging artifacts
+- Trigger by pushing a version tag (example: `v0.1.1`)
+- Optional PyPI publish runs when `PYPI_API_TOKEN` secret is configured
+
+Tag and publish example:
+
+```bash
+git tag v0.1.1
+git push origin v0.1.1
+```
