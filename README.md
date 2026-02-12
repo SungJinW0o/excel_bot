@@ -11,32 +11,39 @@ Supports notifications, DRY_RUN mode, and optional email.
 pip install dist/excel_bot-0.1.0-py3-none-any.whl
 ```
 
-## Usage
+## Quick Start (Windows)
+
+1. Put your Excel files in `input_data/`.
+2. Run:
+
+```bat
+run_bot.bat
+```
+
+3. Choose mode:
+- `1` = safe test run (`DRY_RUN=true`, recommended)
+- `2` = live run (`DRY_RUN=false`)
+
+## Usage (CLI)
 
 Dry-run mode (default, safe test):
-
-```bash
-excel-bot --dry-run true
-```
-
-Real run (emails enabled if configured):
-
-```bash
-excel-bot --dry-run false
-```
-
-Optional launcher:
 
 ```bash
 python run_bot.py --dry-run true
 ```
 
+Real run (emails enabled if configured):
+
+```bash
+python run_bot.py --dry-run false
+```
+
 Headless mode (do not open report/log files):
 
 ```bash
-excel-bot --dry-run true --no-open
+python run_bot.py --dry-run true --no-open
 # or
-excel-bot --dry-run true --headless
+python run_bot.py --dry-run true --headless
 ```
 
 ## Run from source

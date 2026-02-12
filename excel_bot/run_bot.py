@@ -11,10 +11,10 @@ import platform
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 
-def _read_last_event(log_path: Path) -> Optional[str]:
+def _read_last_event(log_path: Path) -> Optional[Dict[str, Any]]:
     if not log_path.exists():
         return None
     try:
@@ -25,11 +25,23 @@ def _read_last_event(log_path: Path) -> Optional[str]:
         last = lines[-1]
         try:
             payload = json.loads(last)
-            return json.dumps(payload, ensure_ascii=False)
+            if isinstance(payload, dict):
+                return payload
+            return {"raw": str(payload)}
         except json.JSONDecodeError:
-            return last
+            return {"raw": last}
     except Exception:
         return None
+
+
+def _format_last_event(event: Dict[str, Any]) -> str:
+    raw = event.get("raw")
+    if raw:
+        return str(raw)
+    event_type = str(event.get("type", "UNKNOWN"))
+    level = str(event.get("level", "INFO"))
+    timestamp = str(event.get("timestamp", ""))
+    return f"{event_type} ({level}) at {timestamp}"
 
 
 def _resolve_python(root: Path) -> str:
@@ -70,7 +82,8 @@ def main() -> int:
     args = parser.parse_args()
 
     dry_run = args.dry_run
-    print(f"DRY_RUN={dry_run}")
+    mode_label = "DRY RUN (safe test)" if dry_run == "true" else "LIVE RUN"
+    print(f"Mode: {mode_label}")
     os.environ["DRY_RUN"] = dry_run
     open_files = not (args.no_open or args.headless)
 
@@ -88,7 +101,7 @@ def main() -> int:
 
     # 4. Run the bot
     try:
-        print("\nRunning Excel Bot...\n")
+        print("\nRunning Excel Bot pipeline...\n")
         subprocess.run([python_exe, "-m", "excel_bot.bot_main"], check=True)
     except subprocess.CalledProcessError as exc:
         print(f"Bot exited with code {exc.returncode}")
@@ -109,11 +122,16 @@ def main() -> int:
     log_env = os.environ.get("EXCEL_BOT_LOG_PATH")
     log_path = Path(log_env) if log_env else (root / "logs" / "events.jsonl")
     last_event = _read_last_event(log_path)
+    print("\nRun summary")
+    print(f"- Mode: {mode_label}")
+    print(f"- Input folder: {input_dir}")
+    print(f"- Output folder: {output_dir}")
+    print(f"- Report file: {report_path}")
+    print(f"- Log file: {log_path}")
     if last_event:
-        print("\nLast event:")
-        print(last_event)
+        print(f"- Last event: {_format_last_event(last_event)}")
     else:
-        print("\nNo events found yet.")
+        print("- Last event: none yet")
 
     # 7. Open log file if it exists
     if open_files and log_path.exists():
@@ -125,7 +143,7 @@ def main() -> int:
         else:
             subprocess.run(["xdg-open", str(log_path)])
 
-    print("\nExcel Bot finished successfully!")
+    print("\nExcel Bot finished successfully.")
     return 0
 
 
