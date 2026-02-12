@@ -14,12 +14,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Detect project directory
+        id: detect_project
         shell: bash
         run: |
           if [[ -f "pyproject.toml" && -d "tests" ]]; then
-            echo "PROJECT_DIR=." >> "$GITHUB_ENV"
+            echo "project_dir=." >> "$GITHUB_OUTPUT"
           elif [[ -f "enterprise_bot/pyproject.toml" && -d "enterprise_bot/tests" ]]; then
-            echo "PROJECT_DIR=enterprise_bot" >> "$GITHUB_ENV"
+            echo "project_dir=enterprise_bot" >> "$GITHUB_OUTPUT"
           else
             echo "Could not find project root with pyproject.toml and tests/"
             exit 1
@@ -29,11 +30,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        working-directory: ${{ env.PROJECT_DIR }}
+        working-directory: ${{ steps.detect_project.outputs.project_dir }}
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e .
           python -m pip install pytest
       - name: Run tests
-        working-directory: ${{ env.PROJECT_DIR }}
+        working-directory: ${{ steps.detect_project.outputs.project_dir }}
         run: python -m pytest -v
