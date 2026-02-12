@@ -19,6 +19,7 @@ pytest-cache-files-*/
 .tmp/
 
 output_data/
+output/
 logs/
 input_data/
 
