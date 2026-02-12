@@ -21,8 +21,12 @@ classifiers = [
     "License :: OSI Approved :: MIT License"
 ]
 
+[project.optional-dependencies]
+gui = ["PySide6>=6.7"]
+
 [project.scripts]
 excel-bot = "excel_bot.run_bot:main"
+excel-bot-gui = "excel_bot.gui:main"
 
 [tool.setuptools]
 packages = ["excel_bot"]

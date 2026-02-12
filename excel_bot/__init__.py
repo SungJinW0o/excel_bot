@@ -3,6 +3,7 @@ __all__ = [
     "bot_main",
     "config",
     "events",
+    "gui",
     "notifications",
 ]
 

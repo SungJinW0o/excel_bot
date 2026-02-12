@@ -10,6 +10,8 @@ $buildDir = Join-Path $repoRoot "build\setup_exe"
 $specPath = Join-Path $buildDir "$OutputName.spec"
 $outputExe = Join-Path $distDir "$OutputName.exe"
 $runBotPath = Join-Path $repoRoot "run_bot.py"
+$runBotGuiPath = Join-Path $repoRoot "run_bot_gui.py"
+$runBotGuiBatPath = Join-Path $repoRoot "run_bot_gui.bat"
 $configPath = Join-Path $repoRoot "config.json"
 $usersPath = Join-Path $repoRoot "users.json"
 $excelBotPath = Join-Path $repoRoot "excel_bot"
@@ -40,6 +42,8 @@ try {
         --workpath $buildDir `
         --specpath $buildDir `
         --add-data "${runBotPath};payload" `
+        --add-data "${runBotGuiPath};payload" `
+        --add-data "${runBotGuiBatPath};payload" `
         --add-data "${configPath};payload" `
         --add-data "${usersPath};payload" `
         --add-data "${excelBotPath};payload/excel_bot" `

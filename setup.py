@@ -29,10 +29,14 @@ setup(
         "pandas>=2.0",
         "openpyxl>=3.1",
     ],
+    extras_require={
+        "gui": ["PySide6>=6.7"],
+    },
     python_requires=">=3.9",
     entry_points={
         "console_scripts": [
             "excel-bot=excel_bot.run_bot:main",
+            "excel-bot-gui=excel_bot.gui:main",
         ],
     },
     classifiers=[

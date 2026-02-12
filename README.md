@@ -14,7 +14,7 @@ pip install dist/excel_bot-0.1.0-py3-none-any.whl
 ## Quick Start (Windows)
 
 1. Put your Excel files in `input_data/`.
-2. Run:
+2. Run the simple launcher:
 
 ```bat
 run_bot.bat
@@ -23,6 +23,39 @@ run_bot.bat
 3. Choose mode:
 - `1` = safe test run (`DRY_RUN=true`, recommended)
 - `2` = live run (`DRY_RUN=false`)
+
+## Desktop GUI (Glass UI)
+
+Install GUI dependency:
+
+```bash
+pip install "excel_bot[gui]"
+```
+
+Launch GUI:
+
+```bash
+python run_bot_gui.py
+# or
+excel-bot-gui
+```
+
+Windows shortcut launcher:
+
+```bat
+run_bot_gui.bat
+```
+
+GUI options include:
+- Safe test vs live mode
+- Open/close report files after run
+- Working directory selection
+- Optional custom `config.json` and `users.json` selection
+- Live run console and status badge
+- Integrity verification (directories, config/users validation, dependency checks)
+- One-click sample data generation
+- App update option (pip upgrade source)
+- Optional feature download (GUI/installer/test tooling)
 
 ## Usage (CLI)
 

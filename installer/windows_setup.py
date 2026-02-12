@@ -73,7 +73,17 @@ def _ensure_virtualenv(target: Path, launcher: list[str]) -> None:
 
     print("Installing dependencies into virtual environment...")
     _run([str(venv_python), "-m", "pip", "install", "--upgrade", "pip"])
-    _run([str(venv_python), "-m", "pip", "install", "pandas>=2.0", "openpyxl>=3.1"])
+    _run(
+        [
+            str(venv_python),
+            "-m",
+            "pip",
+            "install",
+            "pandas>=2.0",
+            "openpyxl>=3.1",
+            "PySide6>=6.7",
+        ]
+    )
 
 
 def _maybe_pause() -> None:
@@ -99,8 +109,10 @@ def main() -> int:
         _ensure_virtualenv(target, launcher)
 
         launch_bat = target / "launch_excel_bot.bat"
+        launch_gui_bat = target / "run_bot_gui.bat"
         print("\nInstallation complete.")
-        print(f"Launch command: {launch_bat}")
+        print(f"CLI launch command: {launch_bat}")
+        print(f"GUI launch command: {launch_gui_bat}")
         return 0
     except Exception as exc:
         print(f"\nERROR: {exc}")
