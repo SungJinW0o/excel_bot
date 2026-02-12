@@ -118,6 +118,13 @@ python run_bot.py --dry-run true --no-open --headless
 - DRY_RUN mode prevents actual emails
 - All outputs go to output_data/ to avoid system folder writes
 
+## Licensing and Commercial Use
+
+- This project is licensed under MIT (`LICENSE`), which allows commercial use, resale, and donation-supported distribution.
+- You must keep the MIT copyright/permission notice in distributed copies or substantial portions.
+- You must also follow third-party dependency licenses.
+- See `THIRD_PARTY_LICENSES.md` for dependency license notices and verification guidance.
+
 ## Build and distribute
 
 ```bash

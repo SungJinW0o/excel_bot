@@ -9,7 +9,7 @@ description = "Cross-platform Excel Automation Bot with logging, events, and not
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "SungJinWoo" }]
+authors = [{ name = "Sung Jin Woo" }]
 dependencies = [
     "pandas>=2.0",
     "openpyxl>=3.1"

@@ -20,7 +20,7 @@ setup(
     description="Cross-platform Excel Automation Bot with logging, events, and notifications",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    author="SungJinWoo",
+    author="Sung Jin Woo",
     license="MIT",
     packages=find_packages(include=["excel_bot", "excel_bot.*"]),
     include_package_data=True,
