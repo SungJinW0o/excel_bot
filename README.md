@@ -8,7 +8,7 @@ Supports notifications, DRY_RUN mode, and optional email.
 ## Install
 
 ```bash
-pip install dist/excel_bot-0.1.6-py3-none-any.whl
+pip install dist/excel_bot-1.0.0-py3-none-any.whl
 ```
 
 ## Quick Start (Windows)
@@ -161,7 +161,7 @@ Note: building a wheel requires `setuptools` and `wheel` to be installed.
 Install locally for testing:
 
 ```bash
-pip install dist/excel_bot-0.1.6-py3-none-any.whl
+pip install dist/excel_bot-1.0.0-py3-none-any.whl
 ```
 
 Run the CLI:
@@ -181,12 +181,12 @@ For this project, use:
 Automated workflow:
 
 - `.github/workflows/release.yml` builds and publishes packaging artifacts
-- Trigger by pushing a version tag (example: `v0.1.6`)
+- Trigger by pushing a version tag (example: `v1.0.0`)
 - Optional PyPI publish runs from `workflow_dispatch` when `publish_to_pypi=true` (Trusted Publishing/OIDC)
 
 Tag and publish example:
 
 ```bash
-git tag v0.1.6
-git push origin v0.1.6
+git tag v1.0.0
+git push origin v1.0.0
 ```

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] - 2026-02-14
+
+- Promote the project to a stable release.
+- Include runtime hardening improvements from `0.1.5` and installer reliability fixes from `0.1.6`.
+- Publish stable artifacts for installer and Python package distribution.
+
 ## [0.1.6] - 2026-02-14
 
 - Fix Windows installer venv bootstrap by auto-repairing broken/missing pip before dependency installation.
