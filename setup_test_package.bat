@@ -71,11 +71,11 @@ if exist requirements.txt (
 )
 
 echo.
-echo [7/12] Freezing installed packages to requirements.txt...
+echo [7/12] Freezing installed packages to requirements.lock.txt...
 if /I "%RUN_PY%"=="python" (
-    python -m pip freeze > requirements.txt || goto :fail
+    python -m pip freeze > requirements.lock.txt || goto :fail
 ) else (
-    python -m pip --python "%VENV_PY%" freeze > requirements.txt || goto :fail
+    python -m pip --python "%VENV_PY%" freeze > requirements.lock.txt || goto :fail
 )
 
 echo.

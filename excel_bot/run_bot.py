@@ -14,6 +14,19 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 
+def _python_has_runtime_dependencies(python_exe: str) -> bool:
+    try:
+        subprocess.run(
+            [python_exe, "-c", "import pandas, openpyxl"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return True
+    except Exception:
+        return False
+
+
 def _read_last_event(log_path: Path) -> Optional[Dict[str, Any]]:
     if not log_path.exists():
         return None
@@ -45,18 +58,29 @@ def _format_last_event(event: Dict[str, Any]) -> str:
 
 
 def _resolve_python(root: Path) -> str:
-    venv_dir = root / ".venv"
-    if venv_dir.exists():
+    for folder_name in (".venv", "venv"):
+        venv_dir = root / folder_name
+        if not venv_dir.exists():
+            continue
         if platform.system() == "Windows":
             candidate = venv_dir / "Scripts" / "python.exe"
         else:
             candidate = venv_dir / "bin" / "python"
         if candidate.exists():
-            print(f"Using virtual environment: {candidate}")
-            return str(candidate)
-        print("Virtual environment detected but Python not found. Using system Python.")
-    else:
-        print("No .venv folder detected, using system Python.")
+            candidate_str = str(candidate)
+            if _python_has_runtime_dependencies(candidate_str):
+                print(f"Using virtual environment: {candidate}")
+                return candidate_str
+            print(
+                f"Virtual environment '{folder_name}' is missing required runtime packages "
+                "(pandas/openpyxl). Trying next Python."
+            )
+            continue
+        print(
+            f"Virtual environment folder '{folder_name}' detected but Python was not found. "
+            "Using system Python."
+        )
+    print("No usable virtual environment detected (.venv or venv), using system Python.")
     return sys.executable
 
 

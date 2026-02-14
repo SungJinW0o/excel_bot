@@ -176,7 +176,7 @@ def test_send_email_respects_runtime_dry_run_without_reload(capsys):
     assert "This is a dry run" not in output
 
 
-def test_send_email_missing_config_non_strict_emits_failed_without_raising(capsys):
+def test_send_email_missing_config_non_strict_emits_skipped_without_raising(capsys):
     os.environ["DRY_RUN"] = "false"
     os.environ.pop("EXCEL_BOT_STRICT_EMAIL", None)
     for key in ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_SENDER"]:
@@ -193,8 +193,9 @@ def test_send_email_missing_config_non_strict_emits_failed_without_raising(capsy
 
     output = capsys.readouterr().out
     event = EVENTS[-1]
-    assert event["type"] == "EMAIL_FAILED"
-    assert "SMTP configuration incomplete" in event["payload"]["error"]
+    assert event["type"] == "EMAIL_SKIPPED"
+    assert event["payload"]["reason"] == "smtp_not_configured"
+    assert "SMTP configuration incomplete" in event["payload"]["details"]
     assert "SMTP configuration incomplete" in output
 
 

@@ -16,7 +16,11 @@ def _smtp_host() -> str:
 
 
 def _smtp_port() -> int:
-    return int(os.getenv("SMTP_PORT", "587"))
+    raw = os.getenv("SMTP_PORT", "587")
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return 587
 
 
 def _smtp_user() -> Optional[str]:
@@ -89,6 +93,15 @@ def send_email(
         )
         return
 
+    if not recipients:
+        print("No recipients found, skipping email.")
+        emit_event(
+            "EMAIL_SKIPPED",
+            user_id="system",
+            payload={"reason": "no_recipients", "subject": subject_with_prefix},
+        )
+        return
+
     missing = []
     if not smtp_host:
         missing.append("SMTP_HOST")
@@ -107,26 +120,28 @@ def send_email(
             + ", ".join(details)
         )
         print(message)
+        if _strict_email_mode():
+            emit_event(
+                "EMAIL_FAILED",
+                user_id="system",
+                payload={
+                    "error": message,
+                    "recipients": recipients,
+                    "subject": subject,
+                    "attachments": attachment_names,
+                },
+            )
+            raise RuntimeError(message)
         emit_event(
-            "EMAIL_FAILED",
+            "EMAIL_SKIPPED",
             user_id="system",
             payload={
-                "error": message,
+                "reason": "smtp_not_configured",
+                "details": message,
                 "recipients": recipients,
                 "subject": subject,
                 "attachments": attachment_names,
             },
-        )
-        if _strict_email_mode():
-            raise RuntimeError(message)
-        return
-
-    if not recipients:
-        print("No recipients found, skipping email.")
-        emit_event(
-            "EMAIL_SKIPPED",
-            user_id="system",
-            payload={"reason": "no_recipients", "subject": subject_with_prefix},
         )
         return
 

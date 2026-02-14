@@ -55,3 +55,45 @@ def test_run_pipeline_uses_in_process_mode_when_frozen():
     assert code == 0
     bot_main_mock.assert_called_once_with()
     subprocess_run_mock.assert_not_called()
+
+
+def test_resolve_python_supports_venv_folder():
+    base_dir = Path(__file__).resolve().parent / "tmp"
+    base_dir.mkdir(exist_ok=True)
+    temp_dir = base_dir / f"run_{uuid.uuid4().hex}"
+    scripts_dir = temp_dir / "venv" / "Scripts"
+    scripts_dir.mkdir(parents=True)
+    candidate = scripts_dir / "python.exe"
+    candidate.write_text("", encoding="utf-8")
+
+    try:
+        with (
+            patch.object(run_bot.platform, "system", return_value="Windows"),
+            patch.object(run_bot, "_python_has_runtime_dependencies", return_value=True),
+        ):
+            resolved = run_bot._resolve_python(temp_dir)
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+    assert resolved == str(candidate)
+
+
+def test_resolve_python_falls_back_when_venv_missing_runtime_deps():
+    base_dir = Path(__file__).resolve().parent / "tmp"
+    base_dir.mkdir(exist_ok=True)
+    temp_dir = base_dir / f"run_{uuid.uuid4().hex}"
+    scripts_dir = temp_dir / "venv" / "Scripts"
+    scripts_dir.mkdir(parents=True)
+    candidate = scripts_dir / "python.exe"
+    candidate.write_text("", encoding="utf-8")
+
+    try:
+        with (
+            patch.object(run_bot.platform, "system", return_value="Windows"),
+            patch.object(run_bot, "_python_has_runtime_dependencies", return_value=False),
+        ):
+            resolved = run_bot._resolve_python(temp_dir)
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+    assert resolved == sys.executable

@@ -8,7 +8,7 @@ Supports notifications, DRY_RUN mode, and optional email.
 ## Install
 
 ```bash
-pip install dist/excel_bot-0.1.0-py3-none-any.whl
+pip install dist/excel_bot-0.1.5-py3-none-any.whl
 ```
 
 ## Quick Start (Windows)
@@ -23,6 +23,12 @@ run_bot.bat
 3. Choose mode:
 - `1` = safe test run (`DRY_RUN=true`, recommended)
 - `2` = live run (`DRY_RUN=false`)
+
+Optional one-command setup/test/package helper:
+
+```bat
+setup_test_package.bat
+```
 
 ## Desktop GUI (Glass UI)
 
@@ -99,6 +105,7 @@ Required input columns: `Quantity`, `UnitPrice`, `Status`, `Category`, `Region`.
 Optional benchmark column: `Expense` (defaults to `0` when missing).
 If rows/files are rejected during validation, details are saved to `output_data/data_quality_issues.csv`.
 The CLI exits with code `2` when no valid input rows are available after validation.
+Rerunning the same input is de-duplicated before writing `cleaned_master.xlsx` (uses `OrderID` when configured).
 
 Headless run from root:
 
@@ -124,13 +131,14 @@ python run_bot.py --dry-run true --no-open --headless
 - Event logging for all pipeline stages
 - DRY_RUN mode for safe testing
 - Optional email notifications
+- Rerun-safe output de-duplication to prevent repeated row inflation
 - Cross-platform CLI
 
 ## Safety notes
 
 - Use virtual environments for isolation
 - DRY_RUN mode prevents actual emails
-- Email notifications are fail-safe by default (pipeline continues even if SMTP is not configured)
+- Email notifications are fail-safe by default (pipeline continues even if SMTP is not configured and logs `EMAIL_SKIPPED`)
 - Set `EXCEL_BOT_STRICT_EMAIL=true` to make SMTP/email failures fail the run
 - All outputs go to output_data/ to avoid system folder writes
 
@@ -153,7 +161,7 @@ Note: building a wheel requires `setuptools` and `wheel` to be installed.
 Install locally for testing:
 
 ```bash
-pip install dist/excel_bot-0.1.0-py3-none-any.whl
+pip install dist/excel_bot-0.1.5-py3-none-any.whl
 ```
 
 Run the CLI:
@@ -173,12 +181,12 @@ For this project, use:
 Automated workflow:
 
 - `.github/workflows/release.yml` builds and publishes packaging artifacts
-- Trigger by pushing a version tag (example: `v0.1.1`)
-- Optional PyPI publish runs when `PYPI_API_TOKEN` secret is configured
+- Trigger by pushing a version tag (example: `v0.1.5`)
+- Optional PyPI publish runs from `workflow_dispatch` when `publish_to_pypi=true` (Trusted Publishing/OIDC)
 
 Tag and publish example:
 
 ```bash
-git tag v0.1.1
-git push origin v0.1.1
+git tag v0.1.5
+git push origin v0.1.5
 ```

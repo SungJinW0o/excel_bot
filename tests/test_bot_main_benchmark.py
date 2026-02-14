@@ -13,6 +13,7 @@ if str(ROOT_DIR) not in sys.path:
 from excel_bot.bot_main import (
     _add_savings_rate,
     _build_executive_dashboard,
+    _deduplicate_cleaned_data,
     _enrich_financial_columns,
     _format_report_workbook,
     _write_data_quality_issues,
@@ -70,6 +71,21 @@ def test_add_savings_rate_handles_zero_earning_without_crashing():
     result = _add_savings_rate(df, earning_col="TotalEarning", savings_col="Savings")
 
     assert list(result["SavingsRate"]) == [0.0, 0.25]
+
+
+def test_deduplicate_cleaned_data_prefers_latest_order_id_row():
+    df = pd.DataFrame(
+        [
+            {"OrderID": "A1", "Quantity": 1, "UnitPrice": 10},
+            {"OrderID": "A1", "Quantity": 2, "UnitPrice": 10},
+            {"OrderID": "B1", "Quantity": 3, "UnitPrice": 5},
+        ]
+    )
+
+    result = _deduplicate_cleaned_data(df, order_id_col="OrderID")
+
+    assert len(result) == 2
+    assert result[result["OrderID"] == "A1"]["Quantity"].iloc[0] == 2
 
 
 def test_format_report_workbook_applies_metric_number_formats():

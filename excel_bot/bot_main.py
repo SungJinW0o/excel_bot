@@ -60,6 +60,14 @@ def _add_savings_rate(df: pd.DataFrame, earning_col: str, savings_col: str) -> p
     return result
 
 
+def _deduplicate_cleaned_data(df: pd.DataFrame, order_id_col: str | None) -> pd.DataFrame:
+    if df.empty:
+        return df
+    if order_id_col and order_id_col in df.columns:
+        return df.drop_duplicates(subset=[order_id_col], keep="last")
+    return df.drop_duplicates(keep="last")
+
+
 def _auto_fit_columns(ws) -> None:
     for col_cells in ws.iter_cols(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
         values = [str(c.value) for c in col_cells if c.value is not None]
@@ -358,10 +366,7 @@ def _run_pipeline() -> None:
             quality_issues.append({"File": file, "Issue": "no_valid_rows_after_cleaning"})
             continue
 
-        if order_id_col and order_id_col in df.columns:
-            df = df.drop_duplicates(subset=[order_id_col])
-        else:
-            df = df.drop_duplicates()
+        df = _deduplicate_cleaned_data(df, order_id_col=order_id_col)
 
         cleaned_frames.append(df)
 
@@ -400,12 +405,19 @@ def _run_pipeline() -> None:
     )
     cleaned_all = cleaned_all[cleaned_all[qty_col] >= config["filters"]["min_quantity"]]
     cleaned_all = cleaned_all[cleaned_all[price_col] >= config["filters"]["min_unit_price"]]
+    rows_before_dedup = len(cleaned_all)
+    cleaned_all = _deduplicate_cleaned_data(cleaned_all, order_id_col=order_id_col)
+    rows_deduped = rows_before_dedup - len(cleaned_all)
 
     cleaned_all.to_excel(cleaned_output, index=False)
     emit_event(
         event_type="DATA_CLEANED",
         user_id=user.id,
-        payload={"rows_written": len(cleaned_all), "output_file": cleaned_output},
+        payload={
+            "rows_written": len(cleaned_all),
+            "rows_deduped": rows_deduped,
+            "output_file": cleaned_output,
+        },
     )
     notify_data_cleaned(cleaned_output)
 
