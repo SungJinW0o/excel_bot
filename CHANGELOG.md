@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] - 2026-02-14
+
+- Fix Python 3.9 compatibility in `excel_bot.bot_main` by postponing type-hint evaluation (`from __future__ import annotations`).
+- Resolve CI/test collection failure on Linux runners using Python 3.9.
+
 ## [1.0.1] - 2026-02-14
 
 - Rebuild desktop GUI layout with splitter + scrollable control panel + card sections to prevent text/field overlap.

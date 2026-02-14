@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 import pandas as pd
@@ -70,8 +72,11 @@ def _deduplicate_cleaned_data(df: pd.DataFrame, order_id_col: str | None) -> pd.
 
 def _auto_fit_columns(ws) -> None:
     for col_cells in ws.iter_cols(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
-        values = [str(c.value) for c in col_cells if c.value is not None]
-        longest = max((len(v) for v in values), default=10)
+        longest = 10
+        for cell in col_cells:
+            if cell.value is None:
+                continue
+            longest = max(longest, len(str(cell.value)))
         width = min(max(longest + 2, 12), 36)
         col_letter = get_column_letter(col_cells[0].column)
         ws.column_dimensions[col_letter].width = width
@@ -298,6 +303,11 @@ def _run_pipeline() -> None:
     region_col = config["columns"]["region"]
     expense_col = config.get("columns", {}).get("expense", "Expense")
     order_id_col = config.get("columns", {}).get("order_id")
+    required_cols = (qty_col, price_col, status_col, category_col, region_col)
+    min_quantity = config["filters"]["min_quantity"]
+    min_unit_price = config["filters"]["min_unit_price"]
+    exclude_status = {s.strip() for s in config["filters"]["exclude_status"]}
+    include_status = {s.strip() for s in config["filters"]["include_status"]}
 
     excel_files = sorted(
         [
@@ -338,7 +348,6 @@ def _run_pipeline() -> None:
             quality_issues.append({"File": file, "Issue": f"read_error: {exc}"})
             continue
 
-        required_cols = [qty_col, price_col, status_col, category_col, region_col]
         missing = [c for c in required_cols if c not in df.columns]
         if missing:
             print(f"Skipping {file}: missing columns {missing}")
@@ -352,14 +361,9 @@ def _run_pipeline() -> None:
             expense_col=expense_col,
         )
 
-        df = df[df[qty_col] >= config["filters"]["min_quantity"]]
-        df = df[df[price_col] >= config["filters"]["min_unit_price"]]
-
+        df = df[(df[qty_col] >= min_quantity) & (df[price_col] >= min_unit_price)]
         df[status_col] = df[status_col].astype(str).str.strip()
-        exclude_status = set(s.strip() for s in config["filters"]["exclude_status"])
-        include_status = set(s.strip() for s in config["filters"]["include_status"])
-        df = df[~df[status_col].isin(exclude_status)]
-        df = df[df[status_col].isin(include_status)]
+        df = df[(~df[status_col].isin(exclude_status)) & (df[status_col].isin(include_status))]
 
         if df.empty:
             print(f"No valid rows after cleaning for {file}")
@@ -403,8 +407,10 @@ def _run_pipeline() -> None:
         price_col=price_col,
         expense_col=expense_col,
     )
-    cleaned_all = cleaned_all[cleaned_all[qty_col] >= config["filters"]["min_quantity"]]
-    cleaned_all = cleaned_all[cleaned_all[price_col] >= config["filters"]["min_unit_price"]]
+    cleaned_all = cleaned_all[
+        (cleaned_all[qty_col] >= min_quantity)
+        & (cleaned_all[price_col] >= min_unit_price)
+    ]
     rows_before_dedup = len(cleaned_all)
     cleaned_all = _deduplicate_cleaned_data(cleaned_all, order_id_col=order_id_col)
     rows_deduped = rows_before_dedup - len(cleaned_all)

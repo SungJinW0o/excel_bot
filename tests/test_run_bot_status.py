@@ -97,3 +97,41 @@ def test_resolve_python_falls_back_when_venv_missing_runtime_deps():
         shutil.rmtree(temp_dir, ignore_errors=True)
 
     assert resolved == sys.executable
+
+
+def test_read_last_event_uses_last_non_empty_line():
+    base_dir = Path(__file__).resolve().parent / "tmp"
+    base_dir.mkdir(exist_ok=True)
+    temp_dir = base_dir / f"run_{uuid.uuid4().hex}"
+    temp_dir.mkdir()
+    log_path = temp_dir / "events.jsonl"
+    log_path.write_text(
+        '{"type":"PIPELINE_STARTED"}\n'
+        '\n'
+        '{"type":"PIPELINE_COMPLETED","level":"INFO","timestamp":"2026-02-14T00:00:00+00:00"}\n',
+        encoding="utf-8",
+    )
+
+    try:
+        event = run_bot._read_last_event(log_path)
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+    assert event is not None
+    assert event["type"] == "PIPELINE_COMPLETED"
+
+
+def test_read_last_event_returns_raw_for_non_json_line():
+    base_dir = Path(__file__).resolve().parent / "tmp"
+    base_dir.mkdir(exist_ok=True)
+    temp_dir = base_dir / f"run_{uuid.uuid4().hex}"
+    temp_dir.mkdir()
+    log_path = temp_dir / "events.jsonl"
+    log_path.write_text("first\n\nnot-json-line\n", encoding="utf-8")
+
+    try:
+        event = run_bot._read_last_event(log_path)
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+    assert event == {"raw": "not-json-line"}

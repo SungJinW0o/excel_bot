@@ -32,10 +32,13 @@ def _read_last_event(log_path: Path) -> Optional[Dict[str, Any]]:
         return None
     try:
         with log_path.open("r", encoding="utf-8") as f:
-            lines = [line.strip() for line in f if line.strip()]
-        if not lines:
+            last = ""
+            for line in f:
+                stripped = line.strip()
+                if stripped:
+                    last = stripped
+        if not last:
             return None
-        last = lines[-1]
         try:
             payload = json.loads(last)
             if isinstance(payload, dict):
@@ -58,11 +61,12 @@ def _format_last_event(event: Dict[str, Any]) -> str:
 
 
 def _resolve_python(root: Path) -> str:
+    is_windows = platform.system() == "Windows"
     for folder_name in (".venv", "venv"):
         venv_dir = root / folder_name
         if not venv_dir.exists():
             continue
-        if platform.system() == "Windows":
+        if is_windows:
             candidate = venv_dir / "Scripts" / "python.exe"
         else:
             candidate = venv_dir / "bin" / "python"
