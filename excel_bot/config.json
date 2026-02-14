@@ -11,6 +11,7 @@
   "columns": {
     "quantity": "Quantity",
     "unit_price": "UnitPrice",
+    "expense": "Expense",
     "status": "Status",
     "category": "Category",
     "region": "Region"

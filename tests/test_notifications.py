@@ -7,6 +7,8 @@ import uuid
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
@@ -172,3 +174,45 @@ def test_send_email_respects_runtime_dry_run_without_reload(capsys):
     assert event["type"] == "EMAIL_FAILED"
     assert "Runtime DRY_RUN toggle" in event["payload"]["subject"]
     assert "This is a dry run" not in output
+
+
+def test_send_email_missing_config_non_strict_emits_failed_without_raising(capsys):
+    os.environ["DRY_RUN"] = "false"
+    os.environ.pop("EXCEL_BOT_STRICT_EMAIL", None)
+    for key in ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_SENDER"]:
+        os.environ.pop(key, None)
+
+    notifications = _reload_notifications()
+    EVENTS.clear()
+
+    notifications.send_email(
+        subject="Missing SMTP",
+        body="body",
+        recipients=["admin@example.com"],
+    )
+
+    output = capsys.readouterr().out
+    event = EVENTS[-1]
+    assert event["type"] == "EMAIL_FAILED"
+    assert "SMTP configuration incomplete" in event["payload"]["error"]
+    assert "SMTP configuration incomplete" in output
+
+
+def test_send_email_missing_config_strict_mode_raises():
+    os.environ["DRY_RUN"] = "false"
+    os.environ["EXCEL_BOT_STRICT_EMAIL"] = "true"
+    for key in ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_SENDER"]:
+        os.environ.pop(key, None)
+
+    notifications = _reload_notifications()
+    EVENTS.clear()
+
+    with pytest.raises(RuntimeError, match="SMTP configuration incomplete"):
+        notifications.send_email(
+            subject="Missing SMTP strict",
+            body="body",
+            recipients=["admin@example.com"],
+        )
+
+    event = EVENTS[-1]
+    assert event["type"] == "EMAIL_FAILED"

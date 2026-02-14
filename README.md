@@ -79,6 +79,12 @@ python run_bot.py --dry-run true --no-open
 python run_bot.py --dry-run true --headless
 ```
 
+Windows Excel integration:
+
+- When open-files mode is enabled, `summary_report.xlsx` is opened in Microsoft Excel when Excel is detected.
+- If Excel is not detected, the report opens with your default file association.
+- You can force a specific Excel binary path with `EXCEL_BOT_EXCEL_PATH` (for example `C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE`).
+
 ## Run from source
 
 You can run directly from the repo without building a wheel:
@@ -89,6 +95,10 @@ python run_bot.py --dry-run true
 
 Outputs go to `output_data/` and logs go to `logs/events.jsonl` by default.
 Use `--no-open` or `--headless` to avoid opening files in server or CI runs.
+Required input columns: `Quantity`, `UnitPrice`, `Status`, `Category`, `Region`.
+Optional benchmark column: `Expense` (defaults to `0` when missing).
+If rows/files are rejected during validation, details are saved to `output_data/data_quality_issues.csv`.
+The CLI exits with code `2` when no valid input rows are available after validation.
 
 Headless run from root:
 
@@ -107,6 +117,10 @@ python run_bot.py --dry-run true --no-open --headless
 
 - Data cleaning and validation
 - Summary reports (overall, category, region)
+- Benchmark analysis saved to report sheets and `output_data/benchmark_summary.csv`
+- Financial metrics: Total Earning, Expenses, Savings, Savings Rate
+- Executive dashboard visuals in `summary_report.xlsx` (KPI cards, category/region charts, savings-rate trend)
+- Data quality diagnostics sheet (`Data_Quality_Issues`) when files/rows are skipped
 - Event logging for all pipeline stages
 - DRY_RUN mode for safe testing
 - Optional email notifications
@@ -116,6 +130,8 @@ python run_bot.py --dry-run true --no-open --headless
 
 - Use virtual environments for isolation
 - DRY_RUN mode prevents actual emails
+- Email notifications are fail-safe by default (pipeline continues even if SMTP is not configured)
+- Set `EXCEL_BOT_STRICT_EMAIL=true` to make SMTP/email failures fail the run
 - All outputs go to output_data/ to avoid system folder writes
 
 ## Licensing and Commercial Use

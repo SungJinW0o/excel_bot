@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from importlib import resources
 from typing import Dict, Optional
 
@@ -18,7 +18,7 @@ class User:
         self.email = email
         self.role = role
         self.status = status
-        self.created_at = created_at or datetime.utcnow().isoformat()
+        self.created_at = created_at or datetime.now(timezone.utc).isoformat()
 
     def can(self, action: str) -> bool:
         if self.status != "active":
@@ -33,7 +33,7 @@ class User:
 def _load_users_from_path(users_file: str) -> list:
     if not os.path.exists(users_file):
         raise FileNotFoundError(f"users.json not found at {users_file}")
-    with open(users_file, "r", encoding="utf-8") as f:
+    with open(users_file, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 

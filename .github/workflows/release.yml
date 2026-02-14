@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       publish_to_pypi:
-        description: "Publish to PyPI (requires PYPI_API_TOKEN secret)"
+        description: "Publish to PyPI using Trusted Publishing (OIDC)"
         required: false
         default: "false"
         type: choice
@@ -119,36 +119,25 @@ jobs:
             release-artifacts/windows-installer/*
 
   publish-pypi:
-    if: ${{ startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_to_pypi == 'true') }}
     runs-on: ubuntu-latest
     needs:
       - build-python
+    permissions:
+      id-token: write
     steps:
+      - name: Skip PyPI publish when not requested
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.publish_to_pypi != 'true' }}
+        run: echo "PyPI publish not requested; skipping."
+
       - name: Download Python dist artifacts
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.publish_to_pypi == 'true' }}
         uses: actions/download-artifact@v4
         with:
           name: python-dist
           path: dist
 
-      - name: Check PyPI token availability
-        id: pypi_token
-        shell: bash
-        env:
-          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        run: |
-          if [[ -n "${PYPI_API_TOKEN}" ]]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Skip PyPI publish when token is missing
-        if: steps.pypi_token.outputs.available != 'true'
-        run: echo "PYPI_API_TOKEN is not configured; skipping PyPI publish."
-
       - name: Publish to PyPI
-        if: steps.pypi_token.outputs.available == 'true'
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.publish_to_pypi == 'true' }}
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
           packages-dir: dist

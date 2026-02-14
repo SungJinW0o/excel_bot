@@ -31,6 +31,10 @@ def _smtp_sender() -> Optional[str]:
     return os.getenv("SMTP_SENDER", _smtp_user())
 
 
+def _strict_email_mode() -> bool:
+    return os.getenv("EXCEL_BOT_STRICT_EMAIL", "false").lower() in ("1", "true", "yes")
+
+
 def get_recipients_by_role(role: str = "admin") -> List[str]:
     users = load_users()
     recipients = []
@@ -98,13 +102,32 @@ def send_email(
         details = missing[:]
         if smtp_host == "smtp.example.com":
             details.append("SMTP_HOST default")
-        raise RuntimeError(
+        message = (
             "SMTP configuration incomplete. Missing or default values: "
             + ", ".join(details)
         )
+        print(message)
+        emit_event(
+            "EMAIL_FAILED",
+            user_id="system",
+            payload={
+                "error": message,
+                "recipients": recipients,
+                "subject": subject,
+                "attachments": attachment_names,
+            },
+        )
+        if _strict_email_mode():
+            raise RuntimeError(message)
+        return
 
     if not recipients:
         print("No recipients found, skipping email.")
+        emit_event(
+            "EMAIL_SKIPPED",
+            user_id="system",
+            payload={"reason": "no_recipients", "subject": subject_with_prefix},
+        )
         return
 
     msg = EmailMessage()
@@ -155,6 +178,8 @@ def send_email(
                 "attachments": attachment_names,
             },
         )
+        if _strict_email_mode():
+            raise
 
 
 def notify_pipeline_completed(cleaned_file: str, report_file: str) -> None:

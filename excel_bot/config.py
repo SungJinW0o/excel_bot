@@ -32,7 +32,7 @@ def validate_config(cfg: dict) -> None:
 
 
 def _load_config_from_path(path: str) -> dict:
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8-sig") as f:
         cfg = json.load(f)
     validate_config(cfg)
     return cfg

@@ -60,6 +60,116 @@ def _resolve_python(root: Path) -> str:
     return sys.executable
 
 
+def _find_excel_executable_windows() -> Optional[str]:
+    env_candidate = os.environ.get("EXCEL_BOT_EXCEL_PATH")
+    if env_candidate:
+        env_path = Path(env_candidate).expanduser()
+        if env_path.exists():
+            return str(env_path)
+
+    try:
+        import winreg  # type: ignore[import-not-found]
+
+        key_paths = [
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\excel.exe",
+            r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\excel.exe",
+        ]
+        for hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+            for key_path in key_paths:
+                try:
+                    with winreg.OpenKey(hive, key_path) as key:
+                        exe_path, _ = winreg.QueryValueEx(key, None)
+                    candidate = Path(str(exe_path))
+                    if candidate.exists():
+                        return str(candidate)
+                except OSError:
+                    continue
+    except Exception:
+        pass
+
+    base_dirs = [
+        os.environ.get("ProgramFiles"),
+        os.environ.get("ProgramFiles(x86)"),
+    ]
+    office_dirs = [
+        ("Microsoft Office", "root", "Office16"),
+        ("Microsoft Office", "Office16"),
+        ("Microsoft Office", "Office15"),
+        ("Microsoft Office", "Office14"),
+    ]
+    for base in base_dirs:
+        if not base:
+            continue
+        for office_dir in office_dirs:
+            candidate = Path(base).joinpath(*office_dir, "EXCEL.EXE")
+            if candidate.exists():
+                return str(candidate)
+
+    return None
+
+
+def _open_with_default_app(path: Path) -> bool:
+    try:
+        if platform.system() == "Windows":
+            os.startfile(path)  # type: ignore[attr-defined]
+        elif platform.system() == "Darwin":
+            subprocess.run(["open", str(path)], check=False)
+        else:
+            subprocess.run(["xdg-open", str(path)], check=False)
+        return True
+    except Exception as exc:
+        print(f"Failed to open file '{path}': {exc}")
+        return False
+
+
+def _open_with_excel_windows(path: Path) -> bool:
+    excel_exe = _find_excel_executable_windows()
+    if not excel_exe:
+        return False
+
+    try:
+        subprocess.Popen([excel_exe, str(path)])
+        return True
+    except Exception as exc:
+        print(f"Excel launch failed for '{path}': {exc}")
+        return False
+
+
+def _open_report_file(path: Path) -> bool:
+    is_excel_file = path.suffix.lower() in {".xlsx", ".xlsm", ".xls"}
+    if platform.system() == "Windows" and is_excel_file:
+        if _open_with_excel_windows(path):
+            return True
+        print("Excel executable not found or failed. Falling back to default file opener.")
+    return _open_with_default_app(path)
+
+
+def _open_log_file(path: Path) -> bool:
+    return _open_with_default_app(path)
+
+
+def _run_pipeline(python_exe: str) -> int:
+    if getattr(sys, "frozen", False):
+        try:
+            from excel_bot import bot_main
+
+            bot_main.main()
+            return 0
+        except SystemExit as exc:
+            if isinstance(exc.code, int):
+                return exc.code
+            return 1
+        except Exception as exc:
+            print(f"Bot failed: {exc}")
+            return 1
+
+    try:
+        subprocess.run([python_exe, "-m", "excel_bot.bot_main"], check=True)
+        return 0
+    except subprocess.CalledProcessError as exc:
+        return exc.returncode
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run the Excel Bot (DRY_RUN optional).")
     parser.add_argument(
@@ -100,23 +210,20 @@ def main() -> int:
     python_exe = _resolve_python(root)
 
     # 4. Run the bot
-    try:
-        print("\nRunning Excel Bot pipeline...\n")
-        subprocess.run([python_exe, "-m", "excel_bot.bot_main"], check=True)
-    except subprocess.CalledProcessError as exc:
-        print(f"Bot exited with code {exc.returncode}")
-        return exc.returncode
+    print("\nRunning Excel Bot pipeline...\n")
+    pipeline_exit_code = _run_pipeline(python_exe)
+    if pipeline_exit_code != 0:
+        print(f"Bot exited with code {pipeline_exit_code}")
+        if pipeline_exit_code == 2:
+            print("Run stopped because no valid input data was available after validation.")
+            print("Check input files and review output_data/data_quality_issues.csv if present.")
+        return pipeline_exit_code
 
     # 5. Open summary report
     report_path = output_dir / "summary_report.xlsx"
     if open_files and report_path.exists():
         print(f"\nOpening report: {report_path}")
-        if platform.system() == "Windows":
-            os.startfile(report_path)  # type: ignore[attr-defined]
-        elif platform.system() == "Darwin":
-            subprocess.run(["open", str(report_path)])
-        else:
-            subprocess.run(["xdg-open", str(report_path)])
+        _open_report_file(report_path)
 
     # 6. Print log/events info
     log_env = os.environ.get("EXCEL_BOT_LOG_PATH")
@@ -136,12 +243,7 @@ def main() -> int:
     # 7. Open log file if it exists
     if open_files and log_path.exists():
         print(f"\nOpening log file: {log_path}")
-        if platform.system() == "Windows":
-            os.startfile(log_path)  # type: ignore[attr-defined]
-        elif platform.system() == "Darwin":
-            subprocess.run(["open", str(log_path)])
-        else:
-            subprocess.run(["xdg-open", str(log_path)])
+        _open_log_file(log_path)
 
     print("\nExcel Bot finished successfully.")
     return 0
