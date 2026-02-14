@@ -143,9 +143,11 @@ def main() -> int:
 
         launch_bat = target / "launch_excel_bot.bat"
         launch_gui_bat = target / "run_bot_gui.bat"
+        launch_gui_vbs = target / "run_bot_gui.vbs"
         print("\nInstallation complete.")
         print(f"CLI launch command: {launch_bat}")
         print(f"GUI launch command: {launch_gui_bat}")
+        print(f"GUI no-console launch command: {launch_gui_vbs}")
         return 0
     except Exception as exc:
         print(f"\nERROR: {exc}")

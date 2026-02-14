@@ -16,7 +16,7 @@ if README.exists():
 
 setup(
     name="excel_bot",
-    version="1.0.0",
+    version="1.0.1",
     description="Cross-platform Excel Automation Bot with logging, events, and notifications",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",

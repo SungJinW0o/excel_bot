@@ -16,7 +16,16 @@ from .config import load_config
 
 
 try:
-    from PySide6.QtCore import QEasingCurve, QObject, QPropertyAnimation, QThread, Qt, QUrl, Signal, Slot
+    from PySide6.QtCore import (
+        QEasingCurve,
+        QObject,
+        QPropertyAnimation,
+        QThread,
+        Qt,
+        QUrl,
+        Signal,
+        Slot,
+    )
     from PySide6.QtGui import QDesktopServices, QFont
     from PySide6.QtWidgets import (
         QApplication,
@@ -25,6 +34,7 @@ try:
         QFileDialog,
         QFrame,
         QGraphicsBlurEffect,
+        QGridLayout,
         QHBoxLayout,
         QLabel,
         QLineEdit,
@@ -33,6 +43,9 @@ try:
         QPlainTextEdit,
         QProgressBar,
         QPushButton,
+        QScrollArea,
+        QSplitter,
+        QSizePolicy,
         QVBoxLayout,
         QWidget,
     )
@@ -44,52 +57,85 @@ else:
 
 STYLE_SHEET = """
 QWidget {
-    color: #e6edf8;
-    font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    color: #edf2ff;
+    font-family: "Segoe UI", "Noto Sans", "Arial Unicode MS", Arial, sans-serif;
     font-size: 13px;
 }
 QMainWindow {
-    background-color: #0a1020;
+    background-color: #050c1e;
 }
 QFrame#Surface {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.20);
-    border-radius: 18px;
+    background: rgba(13, 24, 48, 0.68);
+    border: 1px solid rgba(142, 178, 235, 0.32);
+    border-radius: 20px;
+}
+QFrame#Card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(164, 192, 235, 0.26);
+    border-radius: 16px;
 }
 QLabel#Title {
-    font-size: 30px;
+    font-size: 46px;
     font-weight: 700;
+    color: #f8fbff;
+    letter-spacing: 0.2px;
 }
 QLabel#Subtitle {
-    color: rgba(230, 237, 248, 0.78);
-    font-size: 14px;
+    color: rgba(229, 238, 255, 0.93);
+    font-size: 18px;
 }
 QLabel#SectionTitle {
+    font-size: 26px;
+    font-weight: 600;
+    color: #f8fbff;
+}
+QLabel#HintText {
+    color: rgba(200, 220, 246, 0.90);
+    font-size: 15px;
+}
+QLabel#FieldLabel {
+    color: #f1f7ff;
     font-size: 16px;
     font-weight: 600;
+    padding-top: 2px;
+    padding-bottom: 2px;
 }
 QLabel#StatusBadge {
-    border-radius: 10px;
-    padding: 4px 10px;
+    border-radius: 12px;
+    padding: 6px 14px;
     font-weight: 600;
+    font-size: 14px;
 }
 QLineEdit, QComboBox {
-    background: rgba(12, 20, 36, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(7, 14, 29, 0.84);
+    border: 1px solid rgba(168, 196, 236, 0.30);
     border-radius: 10px;
-    padding: 8px 10px;
+    padding: 12px 14px;
+    min-height: 30px;
+    color: #f7fbff;
+    selection-background-color: rgba(56, 134, 255, 0.45);
 }
 QLineEdit:focus, QComboBox:focus {
-    border-color: rgba(122, 184, 255, 0.85);
+    border-color: rgba(114, 185, 255, 0.96);
+}
+QLineEdit::placeholder {
+    color: rgba(194, 212, 238, 0.70);
+}
+QCheckBox {
+    color: #f2f7ff;
+    font-size: 15px;
 }
 QPushButton {
     border-radius: 12px;
-    padding: 9px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    background: rgba(255, 255, 255, 0.12);
+    padding: 11px 14px;
+    min-height: 32px;
+    border: 1px solid rgba(168, 199, 239, 0.34);
+    background: rgba(255, 255, 255, 0.10);
+    font-size: 15px;
 }
 QPushButton:hover {
-    background: rgba(255, 255, 255, 0.20);
+    background: rgba(255, 255, 255, 0.17);
+    border-color: rgba(183, 211, 245, 0.50);
 }
 QPushButton:disabled {
     background: rgba(255, 255, 255, 0.08);
@@ -112,16 +158,19 @@ QPushButton#PrimaryButton:hover {
     );
 }
 QPlainTextEdit {
-    background: rgba(8, 14, 26, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(5, 12, 27, 0.86);
+    border: 1px solid rgba(152, 186, 232, 0.28);
     border-radius: 12px;
     padding: 10px;
+    color: #f7fbff;
+    font-size: 13px;
 }
 QProgressBar {
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(152, 186, 232, 0.30);
     border-radius: 8px;
     text-align: center;
-    background: rgba(8, 14, 26, 0.85);
+    background: rgba(8, 14, 26, 0.75);
+    min-height: 16px;
 }
 QProgressBar::chunk {
     border-radius: 7px;
@@ -198,8 +247,8 @@ if _GUI_IMPORT_ERROR is None:
         def __init__(self) -> None:
             super().__init__()
             self.setWindowTitle("Excel Bot Studio")
-            self.resize(1140, 740)
-            self.setMinimumSize(1020, 660)
+            self.resize(1580, 940)
+            self.setMinimumSize(1360, 840)
             self.setStyleSheet(STYLE_SHEET)
             self.setWindowOpacity(0.0)
 
@@ -223,113 +272,144 @@ if _GUI_IMPORT_ERROR is None:
             self._setup_orb(self._orb_c, 240, "rgba(57, 212, 181, 130)")
 
             outer = QVBoxLayout(root)
-            outer.setContentsMargins(24, 22, 24, 22)
-            outer.setSpacing(16)
+            outer.setContentsMargins(24, 20, 24, 20)
+            outer.setSpacing(14)
 
             title = QLabel("Excel Bot Studio")
             title.setObjectName("Title")
-            subtitle = QLabel("Smooth pipeline control with integrity checks, updates, and feature installs.")
+            subtitle = QLabel("Run pipeline tasks, monitor logs, and manage updates from one screen.")
             subtitle.setObjectName("Subtitle")
             outer.addWidget(title)
             outer.addWidget(subtitle)
 
-            content = QHBoxLayout()
-            content.setSpacing(16)
-            outer.addLayout(content, 1)
+            splitter = QSplitter(Qt.Horizontal)
+            splitter.setChildrenCollapsible(False)
+            outer.addWidget(splitter, 1)
 
             left_panel = QFrame()
             left_panel.setObjectName("Surface")
-            left_panel.setMinimumWidth(420)
-            left_layout = QVBoxLayout(left_panel)
-            left_layout.setContentsMargins(18, 18, 18, 18)
-            left_layout.setSpacing(12)
-            content.addWidget(left_panel, 0)
+            left_shell = QVBoxLayout(left_panel)
+            left_shell.setContentsMargins(12, 12, 12, 12)
+            left_shell.setSpacing(0)
+
+            left_scroll = QScrollArea()
+            left_scroll.setWidgetResizable(True)
+            left_scroll.setFrameShape(QFrame.NoFrame)
+            left_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            left_shell.addWidget(left_scroll)
+
+            left_content = QWidget()
+            left_scroll.setWidget(left_content)
+            left_layout = QVBoxLayout(left_content)
+            left_layout.setContentsMargins(8, 8, 8, 8)
+            left_layout.setSpacing(14)
 
             right_panel = QFrame()
             right_panel.setObjectName("Surface")
             right_layout = QVBoxLayout(right_panel)
             right_layout.setContentsMargins(18, 18, 18, 18)
-            right_layout.setSpacing(12)
-            content.addWidget(right_panel, 1)
+            right_layout.setSpacing(14)
 
-            left_layout.addWidget(self._section("Run Options"))
+            splitter.addWidget(left_panel)
+            splitter.addWidget(right_panel)
+            splitter.setStretchFactor(0, 16)
+            splitter.setStretchFactor(1, 9)
+            splitter.setSizes([980, 560])
+
+            run_card, run_layout = self._card(
+                "1) Run Setup",
+                "Choose folder, config, run mode, and launch your pipeline.",
+            )
+            left_layout.addWidget(run_card)
 
             self.work_dir_edit = QLineEdit(str(self._root))
-            left_layout.addWidget(QLabel("Working directory"))
-            left_layout.addLayout(self._path_row(self.work_dir_edit, self._browse_work_dir))
+            run_layout.addWidget(self._field_label("Project folder"))
+            run_layout.addWidget(self._path_row(self.work_dir_edit, self._browse_work_dir))
 
-            left_layout.addWidget(QLabel("Configuration file (optional)"))
             self.config_edit = QLineEdit("")
-            self.config_edit.setPlaceholderText("Use default config.json")
-            left_layout.addLayout(self._path_row(self.config_edit, self._browse_config_file))
+            self.config_edit.setPlaceholderText("Leave blank to use config.json in project folder")
+            run_layout.addWidget(self._field_label("Config file path (optional)"))
+            run_layout.addWidget(self._path_row(self.config_edit, self._browse_config_file))
 
-            left_layout.addWidget(QLabel("Users file (optional)"))
             self.users_edit = QLineEdit("")
-            self.users_edit.setPlaceholderText("Use default users.json")
-            left_layout.addLayout(self._path_row(self.users_edit, self._browse_users_file))
+            self.users_edit.setPlaceholderText("Leave blank to use users.json in project folder")
+            run_layout.addWidget(self._field_label("Users file path (optional)"))
+            run_layout.addWidget(self._path_row(self.users_edit, self._browse_users_file))
 
-            left_layout.addWidget(QLabel("Run mode"))
             self.mode_combo = QComboBox()
-            self.mode_combo.addItem("Safe test (DRY_RUN=true)")
-            self.mode_combo.addItem("Live run (DRY_RUN=false)")
-            left_layout.addWidget(self.mode_combo)
+            self.mode_combo.addItem("Safe Test Mode (no real email send)")
+            self.mode_combo.addItem("Live Mode (real email if SMTP configured)")
+            run_layout.addWidget(self._field_label("Run mode"))
+            run_layout.addWidget(self.mode_combo)
 
-            self.open_files_check = QCheckBox("Open report/log files after run")
+            self.open_files_check = QCheckBox("Open report and log files after run")
             self.open_files_check.setChecked(True)
-            left_layout.addWidget(self.open_files_check)
+            run_layout.addWidget(self.open_files_check)
 
-            self.run_button = QPushButton("Run Excel Bot")
+            self.run_button = QPushButton("Start Pipeline Run")
             self.run_button.setObjectName("PrimaryButton")
+            self.run_button.setToolTip("Run the Excel pipeline with selected options.")
             self.run_button.clicked.connect(self._start_run)
-            left_layout.addWidget(self.run_button)
+            run_layout.addWidget(self.run_button)
 
-            quick_actions = QHBoxLayout()
-            input_btn = QPushButton("Open Input")
-            output_btn = QPushButton("Open Output")
-            logs_btn = QPushButton("Open Logs")
-            self.sample_button = QPushButton("Generate Sample")
+            quick_actions = QGridLayout()
+            quick_actions.setHorizontalSpacing(10)
+            quick_actions.setVerticalSpacing(10)
+            input_btn = QPushButton("Open input_data")
+            output_btn = QPushButton("Open output_data")
+            logs_btn = QPushButton("Open logs")
+            self.sample_button = QPushButton("Create Sample File")
+            for btn in [input_btn, output_btn, logs_btn, self.sample_button]:
+                btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             input_btn.clicked.connect(lambda: self._open_relative_folder("input_data"))
             output_btn.clicked.connect(lambda: self._open_relative_folder("output_data"))
             logs_btn.clicked.connect(lambda: self._open_relative_folder("logs"))
             self.sample_button.clicked.connect(self._generate_sample_data)
-            quick_actions.addWidget(input_btn)
-            quick_actions.addWidget(output_btn)
-            quick_actions.addWidget(logs_btn)
-            quick_actions.addWidget(self.sample_button)
-            left_layout.addLayout(quick_actions)
+            quick_actions.addWidget(input_btn, 0, 0)
+            quick_actions.addWidget(output_btn, 0, 1)
+            quick_actions.addWidget(logs_btn, 1, 0)
+            quick_actions.addWidget(self.sample_button, 1, 1)
+            run_layout.addLayout(quick_actions)
 
-            left_layout.addWidget(self._section("Maintenance"))
+            maintenance_card, maintenance_layout = self._card(
+                "2) Maintenance Tools",
+                "Run integrity checks, update package source, and install optional features.",
+            )
+            left_layout.addWidget(maintenance_card)
 
-            self.integrity_button = QPushButton("Verify Integrity")
+            self.integrity_button = QPushButton("Run Integrity Check")
+            self.integrity_button.setToolTip("Validate folders, config files, users file, and dependencies.")
             self.integrity_button.clicked.connect(self._verify_integrity)
-            left_layout.addWidget(self.integrity_button)
+            maintenance_layout.addWidget(self.integrity_button)
 
-            left_layout.addWidget(QLabel("Update source"))
             self.update_source_edit = QLineEdit(DEFAULT_UPDATE_SOURCE)
-            left_layout.addWidget(self.update_source_edit)
+            maintenance_layout.addWidget(self._field_label("Package update source"))
+            maintenance_layout.addWidget(self.update_source_edit)
 
-            self.update_button = QPushButton("Update App")
+            self.update_button = QPushButton("Update Installed Package")
             self.update_button.clicked.connect(self._update_app)
-            left_layout.addWidget(self.update_button)
+            maintenance_layout.addWidget(self.update_button)
 
-            left_layout.addWidget(QLabel("Download optional feature"))
             self.feature_combo = QComboBox()
             for feature_name in FEATURE_PACKAGES:
                 self.feature_combo.addItem(feature_name)
-            left_layout.addWidget(self.feature_combo)
+            maintenance_layout.addWidget(self._field_label("Install optional feature"))
+            maintenance_layout.addWidget(self.feature_combo)
 
-            self.install_feature_button = QPushButton("Download Feature")
+            self.install_feature_button = QPushButton("Install Selected Feature")
             self.install_feature_button.clicked.connect(self._install_feature)
-            left_layout.addWidget(self.install_feature_button)
+            maintenance_layout.addWidget(self.install_feature_button)
+
             left_layout.addStretch(1)
 
             header_row = QHBoxLayout()
-            header_row.addWidget(self._section("Run Console"))
+            header_row.addWidget(self._section("3) Run Console & Output"))
             header_row.addStretch(1)
             self.status_label = QLabel()
             self.status_label.setObjectName("StatusBadge")
             header_row.addWidget(self.status_label)
             right_layout.addLayout(header_row)
+            right_layout.addWidget(self._hint("Live command output and run status appear here."))
 
             self.progress = QProgressBar()
             self.progress.setVisible(False)
@@ -341,9 +421,14 @@ if _GUI_IMPORT_ERROR is None:
             self.log_view.setFont(QFont("Cascadia Mono", 10))
             right_layout.addWidget(self.log_view, 1)
 
-            self.summary_label = QLabel("Summary: waiting for first run.")
+            summary_card, summary_layout = self._card(
+                "Run Summary",
+                "Latest operation status and next action suggestions.",
+            )
+            self.summary_label = QLabel("Ready. Configure options on the left and click Start Pipeline Run.")
             self.summary_label.setWordWrap(True)
-            right_layout.addWidget(self.summary_label)
+            summary_layout.addWidget(self.summary_label)
+            right_layout.addWidget(summary_card)
 
             self._reposition_orbs()
 
@@ -354,14 +439,46 @@ if _GUI_IMPORT_ERROR is None:
             return label
 
         @staticmethod
-        def _path_row(edit: QLineEdit, browse_cb) -> QHBoxLayout:
-            row = QHBoxLayout()
+        def _hint(text: str) -> QLabel:
+            label = QLabel(text)
+            label.setObjectName("HintText")
+            label.setWordWrap(True)
+            return label
+
+        @staticmethod
+        def _card(title: str, hint: str) -> tuple[QFrame, QVBoxLayout]:
+            card = QFrame()
+            card.setObjectName("Card")
+            layout = QVBoxLayout(card)
+            layout.setContentsMargins(14, 14, 14, 14)
+            layout.setSpacing(10)
+            layout.addWidget(BotWindow._section(title))
+            layout.addWidget(BotWindow._hint(hint))
+            return card, layout
+
+        @staticmethod
+        def _field_label(text: str) -> QLabel:
+            label = QLabel(text)
+            label.setObjectName("FieldLabel")
+            return label
+
+        @staticmethod
+        def _path_row(edit: QLineEdit, browse_cb) -> QWidget:
+            container = QWidget()
+            row = QHBoxLayout(container)
+            row.setContentsMargins(0, 0, 0, 0)
             row.setSpacing(8)
+            row.setAlignment(Qt.AlignVCenter)
+            edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             row.addWidget(edit, 1)
             btn = QPushButton("Browse")
+            btn.setMinimumWidth(92)
+            btn.setMaximumWidth(108)
+            btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
             btn.clicked.connect(browse_cb)
             row.addWidget(btn)
-            return row
+            container.setMinimumHeight(48)
+            return container
 
         @staticmethod
         def _setup_orb(orb: QLabel, size: int, color: str) -> None:
@@ -726,6 +843,18 @@ if _GUI_IMPORT_ERROR is None:
 def _run_gui() -> int:
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+    # Improve readability on high-resolution displays where Qt may render too small.
+    scale_text = os.environ.get("EXCEL_BOT_UI_SCALE", "").strip()
+    try:
+        ui_scale = float(scale_text) if scale_text else 1.0
+    except ValueError:
+        ui_scale = 1.0
+    if ui_scale < 1.0:
+        ui_scale = 1.0
+    base_font = app.font()
+    if base_font.pointSizeF() > 0:
+        base_font.setPointSizeF(base_font.pointSizeF() * ui_scale)
+        app.setFont(base_font)
     win = BotWindow()
     win.show()
     return app.exec()

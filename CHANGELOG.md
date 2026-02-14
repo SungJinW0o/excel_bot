@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2026-02-14
+
+- Rebuild desktop GUI layout with splitter + scrollable control panel + card sections to prevent text/field overlap.
+- Improve readability and spacing across headings, labels, inputs, and action buttons.
+- Add reliable no-console GUI launch path via `run_bot_gui.vbs` and strengthen `run_bot_gui.bat` diagnostics.
+- Include new GUI launcher in installer payload and installer completion output.
+
 ## [1.0.0] - 2026-02-14
 
 - Promote the project to a stable release.
