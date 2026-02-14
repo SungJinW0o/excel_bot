@@ -5,34 +5,39 @@
 Cross-platform Excel automation bot for cleaning, summarizing, and event logging.
 Supports notifications, DRY_RUN mode, and optional email.
 
+## Official Download
+
+- Repository (official source): `https://github.com/SungJinW0o/excel_bot`
+- Latest stable release: `https://github.com/SungJinW0o/excel_bot/releases/latest`
+- Windows installer (`setup.exe`): `https://github.com/SungJinW0o/excel_bot/releases/download/v1.0.0/setup.exe`
+
 ## Install
 
-```bash
-pip install dist/excel_bot-1.0.0-py3-none-any.whl
-```
+For most users, install from GitHub Releases using `setup.exe`.
 
 ## Quick Start (Windows)
 
-1. Put your Excel files in `input_data/`.
-2. Run the simple launcher:
+1. Download and run `setup.exe` from the latest release.
+2. Put your Excel files in `%LOCALAPPDATA%\ExcelBot\input_data\`.
+3. Run the installed launcher:
+
+```bat
+%LOCALAPPDATA%\ExcelBot\launch_excel_bot.bat
+```
+
+4. Enter mode when prompted:
+- `true` = safe test run (`DRY_RUN=true`, recommended)
+- `false` = live run (`DRY_RUN=false`)
+
+If you are running from source in the repo, you can still use:
 
 ```bat
 run_bot.bat
 ```
 
-3. Choose mode:
-- `1` = safe test run (`DRY_RUN=true`, recommended)
-- `2` = live run (`DRY_RUN=false`)
-
-Optional one-command setup/test/package helper:
-
-```bat
-setup_test_package.bat
-```
-
 ## Desktop GUI (Glass UI)
 
-Install GUI dependency:
+Install GUI dependency (source/pip installs):
 
 ```bash
 pip install "excel_bot[gui]"
@@ -49,7 +54,7 @@ excel-bot-gui
 Windows shortcut launcher:
 
 ```bat
-run_bot_gui.bat
+%LOCALAPPDATA%\ExcelBot\run_bot_gui.bat
 ```
 
 GUI options include:
