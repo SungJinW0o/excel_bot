@@ -31,6 +31,39 @@ def _run(cmd: list[str], cwd: Path | None = None) -> None:
     subprocess.run(cmd, check=True, cwd=str(cwd) if cwd else None)
 
 
+def _pip_works(venv_python: Path) -> bool:
+    try:
+        subprocess.run(
+            [str(venv_python), "-m", "pip", "--version"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        return True
+    except Exception:
+        return False
+
+
+def _ensure_pip(venv_python: Path) -> None:
+    if _pip_works(venv_python):
+        return
+    print("Repairing pip in virtual environment...")
+    _run([str(venv_python), "-m", "ensurepip", "--upgrade"])
+    if not _pip_works(venv_python):
+        raise RuntimeError("Failed to initialize pip in the virtual environment.")
+
+
+def _pip_install_with_repair(venv_python: Path, args: list[str]) -> None:
+    pip_cmd = [str(venv_python), "-m", "pip"] + args
+    try:
+        _run(pip_cmd)
+    except subprocess.CalledProcessError:
+        print("pip command failed; attempting pip repair and retry...")
+        _ensure_pip(venv_python)
+        _run(pip_cmd)
+
+
 def _find_python_launcher() -> list[str]:
     candidates = [
         ["py", "-3"],
@@ -71,13 +104,13 @@ def _ensure_virtualenv(target: Path, launcher: list[str]) -> None:
         print("Creating virtual environment...")
         _run(launcher + ["-m", "venv", str(venv_dir)])
 
+    _ensure_pip(venv_python)
+
     print("Installing dependencies into virtual environment...")
-    _run([str(venv_python), "-m", "pip", "install", "--upgrade", "pip"])
-    _run(
+    _pip_install_with_repair(venv_python, ["install", "--upgrade", "pip"])
+    _pip_install_with_repair(
+        venv_python,
         [
-            str(venv_python),
-            "-m",
-            "pip",
             "install",
             "pandas>=2.0",
             "openpyxl>=3.1",

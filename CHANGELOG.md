@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.6] - 2026-02-14
+
+- Fix Windows installer venv bootstrap by auto-repairing broken/missing pip before dependency installation.
+- Retry pip install commands after pip repair to reduce setup failures on end-user machines.
+- Add installer regression tests covering pip repair and retry flows.
+
 ## [0.1.5] - 2026-02-14
 
 - Improve runtime stability by falling back to system Python when local `venv`/`.venv` is missing required runtime packages.
